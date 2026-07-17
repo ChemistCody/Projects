@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏰 Mission: California | Cody's Trip Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06101C;--card:#0C1A2E;--cardB:#122038;--gold:#F5C540;--em:#10C97A;--coral:#FF6848;--sky:#44AAFF;--pur:#9B6FE8;--txt:#EDE8D8;--muted:#607A98;--bdr:#172D48;--dim:#243852;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--txt);font-family:'Space Grotesk',system-ui,sans-serif;}
+
+/* ═══ PAGE SYSTEM ═══ */
+.page{position:fixed;inset:0;transition:transform .7s cubic-bezier(.77,0,.18,1),opacity .7s ease;overflow-y:auto;overflow-x:hidden;}
+.page.hidden{pointer-events:none;}
+#splash{z-index:30;background:#03080F;}
+#tracker{z-index:20;background:var(--bg);transform:translateY(100%);opacity:0;}
+#dashboard{z-index:10;background:var(--bg);transform:translateX(100%);opacity:0;}
+#splash.exit{transform:translateY(-100%);opacity:0;}
+#tracker.active{transform:translateY(0);opacity:1;}
+#tracker.exit{transform:translateX(-100%);opacity:0;}
+#dashboard.active{transform:translateX(0);opacity:1;}
+#dashboard.back{transform:translateX(100%);opacity:0;}
+
+/* ═══════════════════ SPLASH ═══════════════════ */
+#splash{display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;}
+
+/* Molecular dot grid */
+#splash::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(245,197,64,.12) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;}
+
+#sparticles{position:absolute;inset:0;pointer-events:none;}
+.sp{position:absolute;border-radius:50%;opacity:0;animation:spIn var(--d) ease-out var(--dl) forwards;}
+@keyframes spIn{to{opacity:var(--op);}}
+
+/* Shooting stars */
+.shoot{position:absolute;height:2px;background:linear-gradient(to right,transparent,rgba(245,197,64,.7),transparent);border-radius:2px;opacity:0;pointer-events:none;}
+@keyframes sh1{0%{opacity:0;transform:translate(0,0);}12%{opacity:.9;}85%{opacity:.7;}100%{opacity:0;transform:translate(520px,360px);}}
+@keyframes sh2{0%{opacity:0;transform:translate(0,0);}12%{opacity:.8;}85%{opacity:.6;}100%{opacity:0;transform:translate(480px,330px);}}
+@keyframes sh3{0%{opacity:0;transform:translate(0,0);}12%{opacity:.9;}85%{opacity:.7;}100%{opacity:0;transform:translate(560px,380px);}}
+@keyframes sh4{0%{opacity:0;transform:translate(0,0);}12%{opacity:.8;}85%{opacity:.6;}100%{opacity:0;transform:translate(500px,340px);}}
+.sh1{width:90px;top:12%;left:-90px;transform:rotate(32deg);animation:sh1 5s ease-in-out 0.2s infinite;}
+.sh2{width:70px;top:35%;left:-70px;transform:rotate(28deg);animation:sh2 6s ease-in-out 2.5s infinite;}
+.sh3{width:80px;top:58%;left:-80px;transform:rotate(35deg);animation:sh3 4.5s ease-in-out 1.2s infinite;}
+.sh4{width:85px;top:78%;left:-85px;transform:rotate(30deg);animation:sh4 5.5s ease-in-out 3.8s infinite;}
+
+/* Rising science bubbles */
+.bubble{position:absolute;border-radius:50%;opacity:0;animation:bub var(--bd) ease-in-out var(--bDelay) infinite;}
+@keyframes bub{0%{transform:translateY(0);opacity:0;}15%{opacity:.6;}75%{opacity:.2;}100%{transform:translateY(-100vh);opacity:0;}}
+
+/* Orbiting rings */
+#orbits{position:absolute;top:50%;left:50%;pointer-events:none;}
+.ring{position:absolute;border-radius:50%;border:1px solid;}
+.ring .ri{position:absolute;top:-16px;left:50%;font-size:20px;line-height:1;}
+
+.rg1{width:clamp(160px,38vw,200px);height:clamp(160px,38vw,200px);border-color:rgba(245,197,64,.28);
+  margin-top:calc(clamp(160px,38vw,200px)/-2);margin-left:calc(clamp(160px,38vw,200px)/-2);
+  animation:orb1 8s linear infinite;}
+.rg2{width:clamp(240px,55vw,310px);height:clamp(240px,55vw,310px);border-color:rgba(16,201,122,.22);
+  margin-top:calc(clamp(240px,55vw,310px)/-2);margin-left:calc(clamp(240px,55vw,310px)/-2);
+  animation:orb2 14s linear infinite;}
+.rg3{width:clamp(320px,72vw,420px);height:clamp(320px,72vw,420px);border-color:rgba(68,170,255,.18);
+  margin-top:calc(clamp(320px,72vw,420px)/-2);margin-left:calc(clamp(320px,72vw,420px)/-2);
+  animation:orb3 20s linear infinite;}
+
+@keyframes orb1{to{transform:rotate(360deg);}}
+@keyframes orb2{to{transform:rotate(-360deg);}}
+@keyframes orb3{to{transform:rotate(360deg);}}
+.ri1{animation:ri1 8s linear infinite;}
+.ri2{animation:ri2 14s linear infinite;}
+.ri3{animation:ri3 20s linear infinite;}
+@keyframes ri1{0%{transform:translateX(-50%) rotate(0deg);}100%{transform:translateX(-50%) rotate(-360deg);}}
+@keyframes ri2{0%{transform:translateX(-50%) rotate(0deg);}100%{transform:translateX(-50%) rotate(360deg);}}
+@keyframes ri3{0%{transform:translateX(-50%) rotate(0deg);}100%{transform:translateX(-50%) rotate(-360deg);}}
+
+/* Ring glow dots */
+.rdot{position:absolute;width:6px;height:6px;border-radius:50%;margin:-3px 0 0 -3px;}
+.rdot1{background:rgba(245,197,64,.5);box-shadow:0 0 8px var(--gold);}
+.rdot2{background:rgba(16,201,122,.5);box-shadow:0 0 8px var(--em);}
+.rdot3{background:rgba(68,170,255,.5);box-shadow:0 0 8px var(--sky);}
+
+/* Central splash content */
+#sc-center{position:relative;z-index:5;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 20px;}
+.splash-castle{font-size:clamp(60px,15vw,90px);animation:castleUp 1.1s cubic-bezier(.34,1.56,.64,1) .8s both;filter:drop-shadow(0 0 30px rgba(245,197,64,.5)) drop-shadow(0 0 60px rgba(245,197,64,.25));margin-bottom:16px;display:block;animation-fill-mode:both;}
+.castle-glow{animation:castleGlow 2.5s ease-in-out 1.8s infinite alternate;}
+@keyframes castleUp{from{transform:scale(0) rotate(-15deg);opacity:0;}to{transform:scale(1) rotate(0);opacity:1;}}
+@keyframes castleGlow{from{filter:drop-shadow(0 0 20px rgba(245,197,64,.4)) drop-shadow(0 0 40px rgba(245,197,64,.2));}to{filter:drop-shadow(0 0 50px rgba(245,197,64,.8)) drop-shadow(0 0 90px rgba(245,197,64,.4));}}
+
+#sp-title{font-size:clamp(22px,7vw,52px);font-weight:900;letter-spacing:3px;background:linear-gradient(125deg,var(--gold) 20%,var(--coral) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;min-height:1.3em;margin-bottom:8px;}
+.sp-sub{color:var(--muted);font-size:clamp(10px,2.5vw,13px);letter-spacing:2px;animation:fadeUp 1s ease 2.8s both;margin-bottom:4px;}
+.sp-sub2{font-size:clamp(9px,2vw,11px);letter-spacing:2px;font-weight:800;animation:fadeUp 1s ease 3.3s both;margin-bottom:28px;}
+.sp-badge{display:inline-block;border-radius:20px;padding:3px 14px;font-size:clamp(8px,2vw,10px);font-weight:800;letter-spacing:1.5px;animation:fadeUp 1s ease 3.3s both;margin-bottom:28px;}
+.sp-enter{color:var(--gold);font-size:clamp(10px,2.5vw,12px);letter-spacing:3px;font-weight:800;animation:pulse 1.5s ease 4.5s infinite both,fadeUp 1s ease 4.2s both;border:1px solid rgba(245,197,64,.3);border-radius:24px;padding:10px 28px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:.4;box-shadow:0 0 0 0 rgba(245,197,64,0);}50%{opacity:1;box-shadow:0 0 20px rgba(245,197,64,.3);}}
+
+/* ═══════════════════ TRACKER ═══════════════════ */
+#tracker{display:flex;flex-direction:column;}
+.trk-hdr{background:linear-gradient(160deg,#0B1830,var(--bg));border-bottom:1px solid var(--bdr);padding:20px 20px 16px;flex-shrink:0;position:relative;overflow:hidden;}
+.trk-hdr::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(245,197,64,.08) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;}
+.trk-hdr-inner{position:relative;}
+.trk-top{display:flex;align-items:center;gap:10px;margin-bottom:3px;}
+.ldot{width:10px;height:10px;border-radius:50%;background:var(--em);flex-shrink:0;}
+.ldot.live{animation:livePulse 1.5s ease-in-out infinite;}
+.ldot.off{background:var(--muted);}
+.ldot.done{background:var(--gold);}
+@keyframes livePulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(16,201,122,.6);}50%{transform:scale(1.3);box-shadow:0 0 0 7px rgba(16,201,122,0);}}
+.trk-label{font-size:10px;letter-spacing:3px;font-weight:800;}
+.trk-htitle{font-size:clamp(24px,6vw,36px);font-weight:900;background:linear-gradient(125deg,var(--gold),var(--coral));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;}
+.trk-hsub{font-size:12px;color:var(--muted);margin-top:3px;}
+
+/* Status card */
+.status-card{margin:16px 20px;background:var(--card);border:1px solid var(--bdr);border-radius:16px;padding:20px;position:relative;overflow:hidden;}
+.status-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(16,201,122,.12),transparent 70%);pointer-events:none;}
+.status-act{font-size:clamp(17px,4.5vw,22px);font-weight:800;margin-bottom:4px;line-height:1.3;}
+.status-loc{font-size:13px;color:var(--muted);margin-bottom:12px;}
+.status-phase{font-size:10px;letter-spacing:2px;font-weight:800;margin-bottom:4px;}
+.status-rem{font-size:12px;color:var(--muted);}
+.status-next{background:var(--cardB);border:1px solid var(--bdr);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--muted);margin-top:12px;}
+.status-cd{font-size:clamp(28px,8vw,44px);font-weight:900;color:var(--gold);line-height:1;margin-bottom:4px;}
+.status-cdl{font-size:10px;letter-spacing:2px;color:var(--muted);}
+
+/* Week timeline nodes */
+.week-section{padding:0 20px;flex-shrink:0;}
+.week-label{font-size:9px;letter-spacing:2.5px;font-weight:800;color:var(--muted);margin-bottom:12px;}
+.week-nodes{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;}
+.week-nodes::-webkit-scrollbar{height:0;}
+.wnode{flex-shrink:0;background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:10px 12px;cursor:pointer;transition:all .2s;text-align:center;min-width:70px;}
+.wnode:hover{border-color:var(--muted);}
+.wnode.active{border-color:var(--gold);background:rgba(245,197,64,.1);}
+.wnode.current{border-color:var(--em);background:rgba(16,201,122,.1);position:relative;}
+.wnode.current::after{content:'';position:absolute;top:-4px;right:-4px;width:8px;height:8px;border-radius:50%;background:var(--em);animation:livePulse 1.5s infinite;}
+.wnode.past{opacity:.6;}
+.wn-icon{font-size:18px;margin-bottom:3px;}
+.wn-day{font-size:9px;font-weight:800;letter-spacing:.5px;}
+.wn-date{font-size:8px;color:var(--muted);}
+.wn-status{font-size:8px;font-weight:700;margin-top:3px;}
+
+/* Day detail */
+.day-detail{flex:1;overflow-y:auto;padding:16px 20px;min-height:0;}
+.dd-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;}
+.dd-icon{font-size:26px;line-height:1;}
+.dd-ey{font-size:9px;letter-spacing:2px;font-weight:800;margin-bottom:2px;}
+.dd-tag{font-size:15px;font-weight:800;}
+.dd-tl{margin-bottom:14px;}
+.dd-item{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
+.dd-t{min-width:60px;font-size:10px;font-weight:700;padding-top:10px;flex-shrink:0;}
+.dd-e{font-size:15px;flex-shrink:0;padding-top:7px;}
+.dd-c{background:var(--card);border:1px solid var(--bdr);border-radius:9px;padding:8px 11px;font-size:12px;line-height:1.5;flex:1;}
+.dd-tips{background:var(--card);border-radius:9px;padding:11px 14px;border-left:3px solid currentColor;font-size:11px;color:var(--muted);line-height:1.9;}
+.dd-tiphdr{font-size:8px;letter-spacing:2px;font-weight:800;margin-bottom:7px;}
+
+/* Tracker bottom bar */
+.trk-bar{padding:14px 20px;border-top:1px solid var(--bdr);flex-shrink:0;background:var(--bg);}
+.trk-btn{width:100%;background:linear-gradient(125deg,var(--gold),var(--coral));color:#06101C;border:none;border-radius:12px;padding:14px;font-size:13px;font-weight:800;letter-spacing:1px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:opacity .15s;}
+.trk-btn:hover{opacity:.9;}
+
+/* ═══════════════════ DASHBOARD ═══════════════════ */
+.back-bar{background:var(--card);border-bottom:1px solid var(--bdr);padding:12px 20px;display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0;}
+.back-btn{background:none;border:none;color:var(--em);font-size:13px;font-weight:700;letter-spacing:.5px;cursor:pointer;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;gap:6px;}
+.dash-scroll{flex:1;overflow-y:auto;min-height:0;}
+
+.hero{background:linear-gradient(155deg,#0B1830,var(--bg) 55%,#0C1525);border-bottom:1px solid var(--bdr);padding:22px 20px 18px;position:relative;overflow:hidden;}
+.hs{position:absolute;inset:0;pointer-events:none;}
+.eyebrow{font-size:10px;letter-spacing:3px;color:var(--em);font-weight:800;margin-bottom:7px;}
+.htitle{font-size:clamp(24px,6vw,40px);font-weight:900;background:linear-gradient(125deg,var(--gold) 20%,var(--coral));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;margin-bottom:4px;}
+.hsub{color:var(--muted);font-size:13px;margin-bottom:16px;}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.stat{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:9px 12px;min-width:62px;}
+.sv{font-size:20px;font-weight:900;line-height:1;}
+.sl{font-size:9px;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-top:2px;}
+.strips{display:flex;flex-wrap:wrap;gap:6px;}
+.strip{background:#0A1626;border:1px solid var(--bdr);border-radius:7px;padding:6px 10px;display:flex;align-items:center;gap:6px;font-size:11px;}
+.slbl{color:var(--muted);font-size:9px;font-weight:800;letter-spacing:1px;}
+
+.dtabs{display:flex;overflow-x:auto;padding:12px 20px 0;gap:5px;border-bottom:1px solid var(--bdr);}
+.dtabs::-webkit-scrollbar{height:3px;}.dtabs::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px;}
+.dtab{background:transparent;color:var(--muted);border:1px solid var(--bdr);border-bottom:none;border-radius:8px 8px 0 0;padding:7px 11px;cursor:pointer;font-size:9px;font-weight:800;letter-spacing:.7px;white-space:nowrap;flex-shrink:0;transition:all .15s;font-family:'Space Grotesk',sans-serif;}
+.dtab .tsub{font-size:8px;margin-top:2px;opacity:.85;}
+.dtab.on{color:#06101C;}
+.dpanel{display:none;padding:18px 20px;}
+.dpanel.on{display:block;animation:fadeUp .2s ease;}
+.dhead{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;}
+.dicon{font-size:26px;line-height:1;}
+.dey{font-size:9px;letter-spacing:2.5px;font-weight:800;margin-bottom:2px;}
+.dtag{font-size:15px;font-weight:800;}
+.tl{margin-bottom:14px;}
+.tli{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;}
+.tlt{min-width:62px;font-size:10px;font-weight:700;padding-top:10px;flex-shrink:0;}
+.tle{font-size:16px;flex-shrink:0;padding-top:7px;}
+.tlc{background:var(--card);border:1px solid var(--bdr);border-radius:9px;padding:8px 11px;font-size:12px;line-height:1.55;flex:1;}
+.tipbox{background:var(--card);border-radius:9px;padding:11px 14px;border-left:3px solid;margin-bottom:12px;}
+.tiph{font-size:8px;letter-spacing:2px;font-weight:800;margin-bottom:8px;}
+.tipr{display:flex;gap:7px;margin-bottom:5px;font-size:11px;color:var(--muted);line-height:1.5;}
+
+.sec{border-top:1px solid var(--bdr);padding:0 20px;}
+.stog{width:100%;background:none;border:none;color:var(--txt);display:flex;align-items:center;justify-content:space-between;padding:15px 0;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;text-align:left;gap:8px;}
+.chev{color:var(--muted);transition:transform .2s;flex-shrink:0;}
+.stog.on .chev{transform:rotate(180deg);}
+.scont{display:none;padding-bottom:22px;}
+.scont.on{display:block;animation:fadeUp .2s ease;}
+.desc{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.75;}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:16px;}
+.icard{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px;}
+.ci{font-size:20px;margin-bottom:8px;}
+.ct{font-size:13px;font-weight:800;margin-bottom:4px;}
+.cb{font-size:11px;color:var(--muted);line-height:1.7;}
+.step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;}
+.snum{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;}
+.stb{flex:1;}
+.stt{font-size:13px;font-weight:700;margin-bottom:2px;}
+.std{font-size:11px;color:var(--muted);line-height:1.6;}
+.rcard{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:8px;}
+.rhead{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.rn{font-size:14px;font-weight:800;}
+.rs{font-size:12px;color:var(--gold);flex-shrink:0;}
+.rd{font-size:11px;color:var(--muted);line-height:1.65;margin-bottom:6px;}
+.rcmp{font-size:10px;color:var(--sky);background:rgba(68,170,255,.1);border-radius:5px;padding:3px 8px;display:inline-block;}
+.bitem{background:var(--card);border:1px solid var(--bdr);border-radius:11px;padding:12px 14px;margin-bottom:8px;display:flex;gap:10px;}
+.bico{font-size:18px;flex-shrink:0;}
+.bc{flex:1;}
+.bn{font-size:12px;font-weight:700;margin-bottom:3px;}
+.bbadge{display:inline-block;font-size:8px;letter-spacing:1.5px;font-weight:800;border-radius:3px;padding:2px 6px;margin-bottom:4px;}
+.bp{font-size:13px;font-weight:900;float:right;}
+.bd{font-size:11px;color:var(--muted);line-height:1.5;clear:both;}
+.pcat{font-size:12px;font-weight:800;margin:14px 0 8px;}
+.pitem{display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:5px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;cursor:pointer;transition:all .15s;}
+.pitem.on{background:rgba(16,201,122,.08);border-color:rgba(16,201,122,.3);}
+.pchk{width:16px;height:16px;border-radius:4px;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:9px;font-weight:900;color:#06101C;}
+.pitem.on .pchk{background:var(--em);border-color:var(--em);}
+.ptxt{font-size:12px;line-height:1.4;transition:all .15s;}
+.pitem.on .ptxt{color:var(--muted);text-decoration:line-through;}
+.tipitem{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:11px 13px;margin-bottom:7px;display:flex;gap:10px;align-items:flex-start;}
+.te{font-size:17px;flex-shrink:0;padding-top:1px;}
+.tt{font-size:12px;line-height:1.65;}
+.div{height:1px;background:var(--bdr);margin:14px 0;}
+.h3s{font-size:12px;font-weight:800;margin-bottom:12px;}
+footer{padding:12px 20px;border-top:1px solid var(--bdr);text-align:center;font-size:9px;color:var(--dim);letter-spacing:1.5px;}
+.gold{color:var(--gold);}.em{color:var(--em);}.coral{color:var(--coral);}.sky{color:var(--sky);}.pur{color:var(--pur);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+#dashboard{display:flex;flex-direction:column;}
+@media(max-width:480px){.cgrid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ SPLASH ═══════════════════════════════════════ -->
+<div class="page" id="splash" onclick="goTracker()">
+  <div id="sparticles"></div>
+  <div class="shoot sh1"></div><div class="shoot sh2"></div>
+  <div class="shoot sh3"></div><div class="shoot sh4"></div>
+  <div id="orbits">
+    <div class="ring rg1">
+      <div class="rdot rdot1" style="top:-3px;left:50%"></div>
+      <div class="ri ri1">🧪</div>
+    </div>
+    <div class="ring rg2">
+      <div class="rdot rdot2" style="top:-3px;left:50%"></div>
+      <div class="ri ri2">🔬</div>
+    </div>
+    <div class="ring rg3">
+      <div class="rdot rdot3" style="top:-3px;left:50%"></div>
+      <div class="ri ri3">⭐</div>
+    </div>
+  </div>
+  <div id="sc-center">
+    <span class="splash-castle castle-glow">🏰</span>
+    <h1 id="sp-title"></h1>
+    <p class="sp-sub">CODY'S OFFICIAL TRIP DASHBOARD · JUL 25–31 2026</p>
+    <div class="sp-sub2">
+      <span class="sp-badge" style="background:rgba(16,201,122,.12);color:var(--em);border:1px solid rgba(16,201,122,.3)">🧪 SMARTSENSE FIELD OPS</span>
+      &nbsp;
+      <span class="sp-badge" style="background:rgba(245,197,64,.1);color:var(--gold);border:1px solid rgba(245,197,64,.25)">🏰 DISNEYLAND FIRST TIMER</span>
+    </div>
+    <div class="sp-enter">✦ TAP TO ENTER MISSION CONTROL ✦</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ TRACKER ═══════════════════════════════════════ -->
+<div class="page" id="tracker">
+  <div class="trk-hdr">
+    <div class="trk-hdr-inner">
+      <div class="trk-top">
+        <div class="ldot" id="ldot"></div>
+        <div class="trk-label" id="trkLabel">📡 CODY CAM — LIVE TRACKER</div>
+      </div>
+      <h1 class="trk-htitle">WHERE IS CODY?</h1>
+      <p class="trk-hsub">Mission: California · Jul 25–31 2026 · SmartSense Expo + SoCal Adventures</p>
+    </div>
+  </div>
+  <div class="status-card" id="statusCard"></div>
+  <div class="week-section">
+    <div class="week-label">WEEK OVERVIEW — TAP A DAY TO EXPLORE</div>
+    <div class="week-nodes" id="weekNodes"></div>
+  </div>
+  <div class="day-detail" id="dayDetail"></div>
+  <div class="trk-bar">
+    <button class="trk-btn" onclick="goDash()">🗺️ &nbsp; OPEN TRIP PLANNING DASHBOARD &nbsp; →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ DASHBOARD ═══════════════════════════════════════ -->
+<div class="page" id="dashboard">
+  <div class="back-bar" onclick="goTrackerBack()">
+    <button class="back-btn">← CODY CAM</button>
+    <span style="font-size:11px;color:var(--muted)">Return to live tracker</span>
+  </div>
+  <div class="dash-scroll">
+    <div class="hero">
+      <div class="hs" id="hs"></div>
+      <div style="position:relative">
+        <div class="eyebrow">SMARTSENSE MISSION CONTROL · FIELD OPS · ANAHEIM CA</div>
+        <h1 class="htitle">MISSION: CALIFORNIA 🏰</h1>
+        <p class="hsub">First time in SoCal · Expo Rep · Disneyland First-Timer · Jul 25–31</p>
+        <div class="stats">
+          <div class="stat"><div class="sv gold" id="dEl">9</div><div class="sl">DAYS TO LAUNCH</div></div>
+          <div class="stat"><div class="sv gold">3</div><div class="sl">PARK NIGHTS</div></div>
+          <div class="stat"><div class="sv em">4</div><div class="sl">EXPO DAYS</div></div>
+          <div class="stat"><div class="sv sky">2</div><div class="sl">BEACHES</div></div>
+          <div class="stat"><div class="sv pur">$59</div><div class="sl">EVE TICKETS</div></div>
+        </div>
+        <div class="strips">
+          <div class="strip">✈️ <span class="slbl">OUT</span> SBN 8:06 → DFW → SNA 1:31 PM · Sat Jul 25 · AA 6335/2684</div>
+          <div class="strip">🏠 <span class="slbl">HOME</span> SNA 12:55 PM → DFW → SBN 10:59 PM · Fri Jul 31 · AA 2669/6305</div>
+          <div class="strip">🏨 Lulu Hotel · Anaheim CA</div>
+        </div>
+      </div>
+    </div>
+    <div class="dtabs" id="dtabs"></div>
+    <div id="dpanels"></div>
+    <div class="sec">
+      <button class="stog" onclick="tog(this)"><span>🎫 LIGHTNING LANE UNIVERSITY — Complete Beginner's Guide</span><span class="chev">▾</span></button>
+      <div class="scont">
+        <p class="desc">You've never used Lightning Lane. Disney replaced the old free FastPass with a paid system in 2021. Two separate products — understanding them before Sunday saves hours and real money.</p>
+        <div class="cgrid">
+          <div class="icard" style="border-top:3px solid var(--gold)">
+            <div class="ci">🎫</div><div class="ct gold">Lightning Lane Multi Pass (LLMP)</div>
+            <div class="cb"><strong style="color:var(--txt)">~$30/person · The main one.</strong><br><br>Buy in Disney app the moment the park opens (7 AM). Pick one ride at a time. After tapping in OR after 2 hours — whichever comes first — book the next. Cycles all day.<br><br><strong style="color:var(--txt)">Best for:</strong> Indiana Jones, Space Mountain, Matterhorn, Haunted Mansion, Smuggler's Run.</div>
+          </div>
+          <div class="icard" style="border-top:3px solid var(--coral)">
+            <div class="ci">⚡</div><div class="ct coral">Lightning Lane Single Pass (LLSP)</div>
+            <div class="cb"><strong style="color:var(--txt)">$20-25/person per ride.</strong><br><br>For premium rides only: Rise of the Resistance, Radiator Springs Racers. Very limited slots. Buy one at entry, another after using it.<br><br><strong style="color:var(--txt)">Your move:</strong> Skip this. Do Rise at rope drop in standby — shorter wait, no extra charge.</div>
+          </div>
+        </div>
+        <div class="h3s">⏱️ SUNDAY STRATEGY — STEP BY STEP</div>
+        <div class="step"><div class="snum" style="background:var(--gold);color:#06101C">1</div><div class="stb"><div class="stt">Saturday Night — Set Up the App</div><div class="std">Disneyland app open. Log in. Add park ticket. Pre-load payment. Set alarm for 6:45 AM. This prevents Sunday morning chaos.</div></div></div>
+        <div class="step"><div class="snum" style="background:var(--gold);color:#06101C">2</div><div class="stb"><div class="stt">7:00 AM Sunday — Buy LLMP at Park Entry</div><div class="std">The moment you tap in, buy Multi Pass (~$30). Immediately book Indiana Jones Adventure, 9:30-10:30 AM window.</div></div></div>
+        <div class="step"><div class="snum" style="background:var(--gold);color:#06101C">3</div><div class="stb"><div class="stt">8:00 AM — Rope Drop → Galaxy's Edge</div><div class="std">Don't waste LLMP on Rise of the Resistance. Rope drop standby = 20-40 min. By 10 AM it's 60-120 min. Walk fast, queue immediately. Best ride, no extra charge.</div></div></div>
+        <div class="step"><div class="snum" style="background:var(--gold);color:#06101C">4</div><div class="stb"><div class="stt">KEY UNLOCK: Tap In → Book Next Immediately</div><div class="std">The moment you physically tap in to a Lightning Lane ride, open the app and book your next one. Don't wait 2 hours. Tap in → book next → cycle. Indiana Jones → Matterhorn → Space Mountain → Haunted Mansion → repeat.</div></div></div>
+        <div class="step"><div class="snum" style="background:var(--gold);color:#06101C">5</div><div class="stb"><div class="stt">Check App Wait Times Constantly</div><div class="std">The app shows real-time standby waits. Under 20 min: walk up. Over 45 min: use your LL booking. This math maximizes your day automatically.</div></div></div>
+        <div class="step"><div class="snum" style="background:var(--gold);color:#06101C">6</div><div class="stb"><div class="stt">Power Move: Modify Time Windows Freely</div><div class="std">You can change a LL booking's time window without losing your next-booking ability. Not near Indiana Jones at 10 AM? Move it to noon. Most first-timers never know this exists.</div></div></div>
+        <div class="div"></div>
+        <div class="h3s">🎯 USE LL / SKIP LL</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px">
+          <div style="background:rgba(16,201,122,.07);border:1px solid rgba(16,201,122,.25);border-radius:10px;padding:12px"><div style="font-size:9px;letter-spacing:2px;font-weight:800;color:var(--em);margin-bottom:8px">✅ USE LLMP</div><div style="font-size:11px;color:var(--muted);line-height:2.1">Indiana Jones<br>Space Mountain<br>Matterhorn Bobsleds<br>Haunted Mansion<br>Smuggler's Run<br>Rise (or rope drop)</div></div>
+          <div style="background:rgba(255,104,72,.07);border:1px solid rgba(255,104,72,.25);border-radius:10px;padding:12px"><div style="font-size:9px;letter-spacing:2px;font-weight:800;color:var(--coral);margin-bottom:8px">❌ WALK UP</div><div style="font-size:11px;color:var(--muted);line-height:2.1">Pirates of the Caribbean<br>Buzz Lightyear<br>Jungle Cruise (morning)<br>"it's a small world"<br>Autopia<br>Under 25 min wait</div></div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--bdr);border-left:3px solid var(--gold);border-radius:10px;padding:12px">
+          <div style="font-size:8px;letter-spacing:2px;font-weight:800;color:var(--gold);margin-bottom:8px">⚡ PRE-SUNDAY CHECKLIST</div>
+          <div style="font-size:11px;color:var(--muted);line-height:2.1">☐ Disney app downloaded + payment pre-loaded Saturday night<br>☐ Phone alarm set for 6:45 AM Saturday night<br>☐ Know LLMP vs LLSP (you do now)<br>☐ Plan to rope-drop Rise of the Resistance (skip the LLSP)<br>☐ Tap in → immediately book next ride (don't wait 2 hours)<br>☐ Modify time windows freely — your spot is protected<br>☐ Screenshot every booking in case of app issues</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <button class="stog" onclick="tog(this)"><span>🎡 KNOTT'S BERRY FARM — Complete Field Guide</span><span class="chev">▾</span></button>
+      <div class="scont">
+        <div class="icard" style="margin-bottom:16px">
+          <div style="font-size:8px;letter-spacing:2px;font-weight:800;color:var(--coral);margin-bottom:7px">YOUR FRAME OF REFERENCE</div>
+          <div class="cb">You've been to <strong style="color:var(--txt)">Cedar Point</strong> (world's coaster capital — intensity, records, minimal theming) and <strong style="color:var(--txt)">Kings Island</strong> (The Beast, Diamondback, solid mix). Knott's is <strong style="color:var(--txt)">closest to Kings Island in vibe</strong> — good coasters, real theming, excellent food. But it has something neither park has: <strong style="color:var(--txt)">Ghost Town</strong>, an actual 1880s Old West village. Knott's is also <strong style="color:var(--txt)">America's oldest theme park</strong> — it predates Disneyland.</div>
+        </div>
+        <div class="h3s">🎢 RIDES — IN ORDER OF PRIORITY</div>
+        <div class="rcard" style="border-top:3px solid var(--gold)">
+          <div class="rhead"><div class="rn">HangTime ⚡ <span style="font-size:10px;color:var(--muted);font-weight:400">— DO THIS FIRST</span></div><div class="rs">★★★★★</div></div>
+          <div class="rd">Inverted coaster with a holding brake at the top of a 96° drop that suspends you for 2-3 seconds — dangling, looking straight down — before releasing. The anticipation is legitimately terrifying. Under 90 seconds total but that pause stays with you.</div>
+          <div class="rcmp">🔄 Nothing like this at Cedar Point or Kings Island — unique to Knott's</div>
+        </div>
+        <div class="rcard" style="border-top:3px solid var(--coral)">
+          <div class="rhead"><div class="rn">GhostRider 🪵 <span style="font-size:10px;color:var(--muted);font-weight:400">— MAIN EVENT</span></div><div class="rs">★★★★★</div></div>
+          <div class="rd">4,533 ft wooden coaster, 108 ft tall, 56 mph. Wild, loud, classically rough. If you loved The Beast at Kings Island, this is its California cousin. Renovated in 2016 — much smoother now. Front row for views, back row for the wild ride.</div>
+          <div class="rcmp">🔄 Direct comparison to The Beast (Kings Island) — same big wooden coaster energy</div>
+        </div>
+        <div class="rcard">
+          <div class="rhead"><div class="rn">Silver Bullet 🌀</div><div class="rs">★★★★</div></div>
+          <div class="rd">Suspended looping coaster, feet dangle through 6 inversions. Smooth, fast, great flying sensation. Less intense than Raptor at Cedar Point but genuinely excellent.</div>
+          <div class="rcmp">🔄 Like a smoother, compact Raptor (CP) or Banshee (Kings Island)</div>
+        </div>
+        <div class="rcard">
+          <div class="rhead"><div class="rn">Montezooma's Revenge 🔁</div><div class="rs">★★★</div></div>
+          <div class="rd">Classic 1978 shuttle coaster. Launches forward through a giant loop and spiral, then reverses backward. Short, punchy, 46 years on the menu.</div>
+          <div class="rcmp">🔄 Boomerang-style — larger version of the county fair staple</div>
+        </div>
+        <div class="div"></div>
+        <div class="h3s">🍗 THE FOOD — THIS IS WHY THE PARK EXISTS</div>
+        <div class="icard" style="margin-bottom:8px"><div class="ci">🍗</div><div class="ct">Mrs. Knott's Fried Chicken Dinner</div><div class="cb">Cordelia Knott started serving fried chicken in 1934. Crowds grew so large that Walter built amusements to entertain people waiting. That's how a theme park was born from a fried chicken dinner. Chicken, mashed potatoes, biscuits, boysenberry preserves. On the menu 90+ years. Order it.</div></div>
+        <div class="icard" style="margin-bottom:16px"><div class="ci">🫐</div><div class="ct">Boysenberry Everything</div><div class="cb">Walter Knott developed the boysenberry here in the 1920s — blackberry/raspberry/loganberry hybrid. It's in everything: punch, pie, BBQ sauce, lemonade, jam. Get the boysenberry punch. The jam in the gift shop is a genuinely great bring-home gift.</div></div>
+        <div class="h3s">📋 TUESDAY EVENING STRATEGY</div>
+        <div style="background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:13px;margin-bottom:16px;font-size:11px;color:var(--muted);line-height:2.4">
+          <strong style="color:var(--txt)">6:00 PM</strong> — Arrive. No reservation needed. Walk straight in.<br>
+          <strong style="color:var(--txt)">6:15 PM</strong> — HangTime first (unique, shorter evening wait)<br>
+          <strong style="color:var(--txt)">7:00 PM</strong> — GhostRider — main event<br>
+          <strong style="color:var(--txt)">8:00 PM</strong> — Mrs. Knott's fried chicken dinner<br>
+          <strong style="color:var(--txt)">9:00 PM</strong> — Silver Bullet + Montezooma's Revenge<br>
+          <strong style="color:var(--txt)">9:45 PM</strong> — Ghost Town at night — Old West + period lighting<br>
+          <strong style="color:var(--txt)">10:30 PM</strong> — Uber back. Fried chicken coma.
+        </div>
+        <div style="background:var(--card);border:1px solid var(--bdr);border-left:3px solid var(--coral);border-radius:10px;padding:12px">
+          <div style="font-size:8px;letter-spacing:2px;font-weight:800;color:var(--coral);margin-bottom:8px">💡 KNOTT'S TIPS</div>
+          <div style="font-size:11px;color:var(--muted);line-height:2.1">→ Buy at knotts.com — $55-75 vs $100+ at gate. No reservation needed.<br>→ No Lightning Lane — just standby. Refreshingly simple.<br>→ Weekday evenings are light on crowds.<br>→ Ghost Town most atmospheric after 9 PM.<br>→ Boysenberry jam at gift shop: great bring-home gift.<br>→ 10-15 min Uber from Lulu Hotel.</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <button class="stog" onclick="tog(this)"><span>💰 BOOKING PRIORITY &amp; BUDGET</span><span class="chev">▾</span></button>
+      <div class="scont">
+        <p class="desc">Priority order. 🚨 items need to happen before you close this. Hotel and expo are on SmartSense — this is your personal spend.</p>
+        <div id="blist"></div>
+        <div class="div"></div>
+        <div style="font-size:9px;letter-spacing:2px;font-weight:800;color:var(--muted);margin-bottom:10px">💵 BUDGET BREAKDOWN</div>
+        <div id="budlist"></div>
+        <div style="background:rgba(255,104,72,.1);border:1px solid rgba(255,104,72,.3);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+          <div><div style="font-size:9px;letter-spacing:2px;font-weight:800;color:var(--coral)">ESTIMATED PERSONAL TOTAL</div><div style="font-size:10px;color:var(--muted);margin-top:2px">non-work, out of pocket</div></div>
+          <div style="font-size:26px;font-weight:900;color:var(--coral)">~$890</div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <button class="stog" onclick="tog(this)"><span>🧳 PACK LIST</span><span class="chev">▾</span></button>
+      <div class="scont">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+          <div style="font-size:10px;color:var(--muted)">Tap to check off · saves in browser</div>
+          <div style="font-size:10px;font-weight:700" id="pprog">0 / 0 packed</div>
+        </div>
+        <div id="plist"></div>
+      </div>
+    </div>
+    <div class="sec">
+      <button class="stog" onclick="tog(this)"><span>🎯 ALL THE PRO TIPS</span><span class="chev">▾</span></button>
+      <div class="scont"><div id="tlist"></div></div>
+    </div>
+    <footer>🧪 SMARTSENSE MISSION CONTROL · ANAHEIM FIELD OPS · JUL 25–31 2026 🏰</footer>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const DAYS=[
+ {id:'sat',short:'SAT 25',label:'ARRIVAL',icon:'✈️',accent:'#44AAFF',tagline:'Touch down, California bound',
+  ev:[
+   {t:'8:06 AM',e:'✈️',x:"AA 6335 departs South Bend. You're wheels up."},
+   {t:'9:50 AM',e:'🏛️',x:'Land at DFW. 2h 33m layover — use the Priority Pass lounge.'},
+   {t:'12:23 PM',e:'✈️',x:'AA 2684 departs DFW → SNA. California approach is worth a window seat.'},
+   {t:'1:31 PM',e:'🌴',x:'Land at John Wayne Airport (SNA). Small airport, bags come fast. Welcome to the West Coast.'},
+   {t:'2:30 PM',e:'🏨',x:'Uber to Lulu Hotel (~$35-45). Drop bags. Breathe.'},
+   {t:'3:30 PM',e:'🚗',x:'Uber to Huntington Beach — 20 min south. First time at the Pacific Ocean.'},
+   {t:'4:00 PM',e:'🌊',x:'Walk out on the pier. Touch the water. This is it.'},
+   {t:'7:00 PM',e:'🍽️',x:"Dinner: Duke's Surf Club or Pacific City food hall (30+ options)."},
+   {t:'9:00 PM',e:'📱',x:'Hotel. Disneyland app. Pre-load payment. Set alarm for 6:45 AM.'},
+  ],
+  tips:['Uber SNA → hotel ~$35-45','DFW Priority Pass lounge: 2h 33m is plenty','Do nothing Disney-adjacent tonight — save all energy']},
+ {id:'sun',short:'SUN 26',label:'DISNEYLAND',icon:'🏰',accent:'#F5C540',tagline:'The Happiest First Day on Earth',
+  ev:[
+   {t:'6:45 AM',e:'⏰',x:'Alarm. Real breakfast. 20,000+ steps today — fuel up.'},
+   {t:'7:00 AM',e:'📱',x:'CRITICAL: Buy Lightning Lane Multi Pass (~$30) in app. Book Indiana Jones first.'},
+   {t:'8:00 AM',e:'🎡',x:'Rope drop — be at the gates when they open.'},
+   {t:'8:15 AM',e:'⭐',x:"Galaxy's Edge → Rise of the Resistance. Best ride in the park. Do it at rope drop in standby."},
+   {t:'10:30 AM',e:'🪨',x:'Indiana Jones LL → tap in → book next. Matterhorn, Space Mountain, Haunted Mansion cycle.'},
+   {t:'12:00 PM',e:'🌭',x:'Corn dog at Little Red Wagon on Main Street. Non-negotiable.'},
+   {t:'2:30 PM',e:'👻',x:'Haunted Mansion → Space Mountain → Big Thunder Mountain.'},
+   {t:'6:00 PM',e:'🍗',x:'Dinner: Bengal Barbecue or mobile order in-app.'},
+   {t:'9:00 PM',e:'🎆',x:'Wondrous Journeys fireworks over the castle. STAY FOR THIS.'},
+   {t:'9:30 PM',e:'✨',x:'Fantasmic! if it runs. Perfect close to a first Disney day.'},
+  ],
+  tips:['Full day ticket: ~$189 — July peak. Plan for it.','LLMP ~$30: buy at 7 AM in-app. See LL University in the dashboard.','Disneyland app: real-time waits + mobile order + LL management.','Free water cups at any counter service.','Wear comfortable shoes, not stylish ones.']},
+ {id:'mon',short:'MON 27',label:'EXPO + DCA',icon:'🔬',accent:'#10C97A',tagline:'SmartSense by day, Avengers by night',
+  ev:[
+   {t:'8:00 AM',e:'💼',x:'Expo opens — Anaheim Convention Center. SmartSense booth.'},
+   {t:'All day',e:'🧪',x:'Demos, prospect conversations, lead capture.'},
+   {t:'5:00 PM',e:'🎟️',x:'$59 DCA Evening Ticket — entry at 5:00 PM. Be there on time.'},
+   {t:'5:30 PM',e:'🏎️',x:"Radiator Springs Racers in Cars Land. Most popular ride at DCA. Jaw-dropping theming."},
+   {t:'6:30 PM',e:'🦸',x:'Avengers Campus: Web Slingers + live Spider-Man stunt show.'},
+   {t:'7:30 PM',e:'⚡',x:'Incredicoaster — best coaster at the entire resort.'},
+   {t:'9:00 PM',e:'💧',x:'World of Color — water + fire + projection show. Stake your spot by 8:30.'},
+  ],
+  tips:['$59 DCA evening ticket: book NOW at disneyland.com — limited slots.','Entry at 5 PM sharp.','Convention Center to DCA gate: ~10-12 min walk.']},
+ {id:'tue',short:'TUE 28',label:"EXPO + KNOTT'S",icon:'🎡',accent:'#FF6848',tagline:"America's oldest theme park",
+  ev:[
+   {t:'8:00 AM',e:'🔬',x:"Expo Day 2. Follow up on Monday's warm conversations."},
+   {t:'All day',e:'🧬',x:"You've found your rhythm. Booths, demos, conversations."},
+   {t:'6:00 PM',e:'🎡',x:"Knott's Berry Farm — 10 min Uber, less crowded than Disney."},
+   {t:'6:15 PM',e:'⚡',x:'HangTime — 96° drop with a holding brake at the top. Nothing like this at Cedar Point or KI.'},
+   {t:'7:00 PM',e:'🪵',x:'GhostRider — 4,533 ft wooden coaster. The Beast has a California cousin.'},
+   {t:'8:00 PM',e:'🍗',x:"Mrs. Knott's fried chicken dinner. 90 years on the menu. Eat it."},
+   {t:'9:30 PM',e:'👻',x:'Ghost Town at night. Old West atmosphere with period lighting.'},
+  ],
+  tips:["Buy at knotts.com — $55-75 vs $100+ gate.","Or swap for a rest night — expo fatigue is real.","No Lightning Lane here. Just standby. Refreshingly simple."]},
+ {id:'wed',short:'WED 29',label:'EXPO + DISNEY',icon:'🧪',accent:'#F5C540',tagline:'One more night of magic — at $59',
+  ev:[
+   {t:'8:00 AM',e:'💼',x:'Expo Day 3. Last big push before final day.'},
+   {t:'All day',e:'🔭',x:'Go deep on any warm prospects. Handoff thinking begins.'},
+   {t:'7:00 PM',e:'🏰',x:'Disneyland $59 evening ticket — entry at 7 PM. You know the park now.'},
+   {t:'7:30 PM',e:'🌌',x:"Hit anything you missed Sunday. Galaxy's Edge deeper cuts, Tomorrowland."},
+   {t:'8:30 PM',e:'👻',x:'Haunted Mansion at night. Different atmosphere than daytime.'},
+   {t:'9:30 PM',e:'🎆',x:'Wondrous Journeys fireworks over the Sleeping Beauty Castle.'},
+  ],
+  tips:["$59 evening ticket — LAST valid night (Sun-Wed only). Book if you haven't.",'Disneyland entry at 7 PM on this ticket.']},
+ {id:'thu',short:'THU 30',label:'EXPO + LAGUNA',icon:'🌊',accent:'#9B6FE8',tagline:'Final expo day + golden hour finale',
+  ev:[
+   {t:'8:00 AM',e:'🏁',x:'Final expo day. Wrap all conversations. Log every lead.'},
+   {t:'4:00 PM',e:'🎉',x:'Expo complete. Four days done. Close California out properly.'},
+   {t:'5:30 PM',e:'🚗',x:'Uber to Laguna Beach — 35-40 min. ~$40-45 each way.'},
+   {t:'6:00 PM',e:'🌅',x:'Heisler Park cliff walk — Pacific from the bluffs, tide pools below.'},
+   {t:'7:45 PM',e:'🍷',x:"Dinner in Laguna Village — The Beachcomber or Nick's Laguna Beach."},
+   {t:'9:30 PM',e:'🌙',x:'Uber back. Pack tonight. Friday should be stress-free.'},
+  ],
+  tips:['Uber to Laguna ~$35-45. Budget $90 round trip.','July sunsets ~7:45-8 PM — you catch it from the cliffs.','Make a dinner reservation — Laguna fills in summer.']},
+ {id:'fri',short:'FRI 31',label:'DEPARTURE',icon:'🛫',accent:'#607A98',tagline:'Indiana never looked so good',
+  ev:[
+   {t:'8:00 AM',e:'☕',x:'Last California morning. No rush — SNA is 25 min away.'},
+   {t:'10:00 AM',e:'🧳',x:'Checkout. Uber to SNA (~25 min, ~$35-40).'},
+   {t:'11:00 AM',e:'🛡️',x:'SNA security is fast. 45 min pre-flight is comfortable.'},
+   {t:'12:55 PM',e:'✈️',x:'AA 2669 departs SNA → DFW. Arrives 6:14 PM Central.'},
+   {t:'6:14 PM',e:'🏛️',x:'DFW. 1h 15m — Priority Pass lounge, but stay near your gate.'},
+   {t:'7:29 PM',e:'✈️',x:'AA 6305 departs DFW → South Bend. Arrives 10:59 PM.'},
+   {t:'10:59 PM',e:'🏠',x:"Back in Indiana. Mission: California complete. Tell Caden everything."},
+  ],
+  tips:['SNA = small, fast security. 45 min pre-flight is fine.','DFW 1h 15m: Priority Pass but stay near your gate.']},
+];
+
+const SCHED=[
+ {d:'2026-07-25',s:486,e:590,a:'✈️ Flying SBN → DFW',l:'Somewhere over the Midwest'},
+ {d:'2026-07-25',s:590,e:743,a:'🏛️ DFW Layover — Priority Pass lounge',l:'DFW Airport, Dallas TX'},
+ {d:'2026-07-25',s:743,e:811,a:'✈️ Flying DFW → SNA',l:'Over the American Southwest'},
+ {d:'2026-07-25',s:811,e:870,a:'🛬 Landed at SNA — First time in California!',l:'John Wayne Airport, Orange County CA'},
+ {d:'2026-07-25',s:870,e:930,a:'🏨 Checking into Lulu Hotel',l:'Lulu Hotel, Anaheim CA'},
+ {d:'2026-07-25',s:930,e:1200,a:'🌊 First time at the Pacific Ocean!',l:'Huntington Beach, California'},
+ {d:'2026-07-25',s:1200,e:1320,a:'🍽️ Dinner by the beach',l:'Huntington Beach, CA'},
+ {d:'2026-07-25',s:1320,e:1440,a:'😴 Resting for the big Disney day',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-26',s:405,e:480,a:'☕ Waking up for Disneyland!',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-26',s:480,e:1290,a:'🏰 DISNEYLAND — First time ever!',l:'Disneyland Park, Anaheim CA'},
+ {d:'2026-07-26',s:1290,e:1440,a:'😴 Exhausted and enchanted',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-27',s:450,e:480,a:'☕ Getting ready for the expo',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-27',s:480,e:1020,a:'🧪 SmartSense at Expo',l:'Anaheim Convention Center'},
+ {d:'2026-07-27',s:1020,e:1320,a:'🎢 Disney California Adventure evening!',l:'Disney California Adventure, Anaheim'},
+ {d:'2026-07-27',s:1320,e:1440,a:'😴 Back at the hotel',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-28',s:450,e:480,a:'☕ Expo Day 2 morning',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-28',s:480,e:1080,a:'🔬 SmartSense at Expo',l:'Anaheim Convention Center'},
+ {d:'2026-07-28',s:1080,e:1350,a:"🎡 Knott's Berry Farm!",l:"Knott's Berry Farm, Buena Park CA"},
+ {d:'2026-07-28',s:1350,e:1440,a:'😴 Fried chicken coma',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-29',s:450,e:480,a:'☕ Expo Day 3 morning',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-29',s:480,e:1110,a:'🧬 SmartSense at Expo',l:'Anaheim Convention Center'},
+ {d:'2026-07-29',s:1140,e:1350,a:'🏰 Back at Disneyland — $59 evening!',l:'Disneyland Park, Anaheim CA'},
+ {d:'2026-07-29',s:1350,e:1440,a:'😴 Two Disney nights done',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-30',s:450,e:480,a:'☕ Last expo morning!',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-30',s:480,e:1020,a:'🏁 SmartSense — final expo day!',l:'Anaheim Convention Center'},
+ {d:'2026-07-30',s:1020,e:1320,a:'🌅 Laguna Beach golden hour!',l:'Laguna Beach, Orange County CA'},
+ {d:'2026-07-30',s:1320,e:1440,a:'😴 Packing for the flight home',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-31',s:420,e:700,a:'☕ Last California morning + checkout',l:'Lulu Hotel, Anaheim'},
+ {d:'2026-07-31',s:700,e:775,a:'🛫 Heading to SNA',l:'SNA Airport, Orange County CA'},
+ {d:'2026-07-31',s:775,e:990,a:'✈️ Flying SNA → DFW',l:'In the air'},
+ {d:'2026-07-31',s:990,e:1069,a:'🏛️ DFW layover — Priority Pass lounge',l:'DFW Airport, Dallas TX'},
+ {d:'2026-07-31',s:1069,e:1440,a:'✈️ Flying DFW → SBN — Indiana bound!',l:'In the air'},
+];
+
+const BOOKING=[
+ {u:'🚨',badge:'DO THIS NOW',item:'Disneyland Full Day Ticket — Sun Jul 26',price:'~$189',color:'#FF6848',detail:'July = peak pricing. Park reservations fill up. Go to disneyland.com/tickets now.'},
+ {u:'🚨',badge:'DO THIS NOW',item:'DCA $59 Evening Ticket — Mon Jul 27',price:'$59',color:'#FF6848',detail:'Limited allocation at disneyland.com — select California Adventure, entry at 5 PM.'},
+ {u:'⚡',badge:'THIS WEEK',item:'Disneyland $59 Evening Ticket — Wed Jul 29',price:'$59',color:'#F5C540',detail:'Last valid night for the $59 deal (Sun-Wed only). Slots disappear fast.'},
+ {u:'⚡',badge:'THIS WEEK',item:"Knott's Berry Farm — Tue Jul 28",price:'~$60-75',color:'#F5C540',detail:'Buy at knotts.com for discount. No reservation needed.'},
+ {u:'📅',badge:'BEFORE TRIP',item:'Lightning Lane Multi Pass — buy day-of in-app',price:'~$30',color:'#44AAFF',detail:'NOT pre-purchased. Buy in Disney app at 7:00 AM Sunday. Alarm Saturday 6:55 AM.'},
+ {u:'📅',badge:'BEFORE TRIP',item:'Laguna Beach dinner — Thu Jul 30',price:'Varies',color:'#44AAFF',detail:"The Beachcomber or Nick's Laguna Beach. Book on Resy — summer fills fast."},
+ {u:'✅',badge:'ALREADY ACTIVE',item:'Priority Pass — use at DFW both legs',price:'Have it',color:'#10C97A',detail:'Both layovers at DFW. Lounge especially on return.'},
+ {u:'🆓',badge:'FREE',item:'Downtown Disney District',price:'Free',color:'#607A98',detail:'Outside Disney gates, no ticket. Good Saturday evening option.'},
+];
+
+const BUDGET=[
+ {l:'Disneyland Sunday (ticket + LLMP + food)',e:'~$260-280'},
+ {l:'DCA Monday evening ($59 ticket + dinner)',e:'~$100-110'},
+ {l:'Disneyland Wednesday evening ($59 + food)',e:'~$80-90'},
+ {l:"Knott's Tuesday evening (ticket + dinner)",e:'~$90-110'},
+ {l:'Huntington Beach Saturday (Uber + dinner)',e:'~$110-130'},
+ {l:'Laguna Beach Thursday (Uber r/t + dinner)',e:'~$150-180'},
+ {l:'Misc Ubers throughout the week',e:'~$100-150'},
+];
+
+const PACKING=[
+ {cat:'🎢 Park Days',items:["Most comfortable walking shoes (not cute, comfortable)","Small crossbody bag","Portable phone charger / power bank","Reusable water bottle (Disney gives free water)","Sunscreen SPF 50+","Sunglasses","Light jacket for evenings"]},
+ {cat:'💼 Expo / Work',items:["Business cards","SmartSense collateral","Laptop + charger","2-3 polished work outfits (Mon-Thu)","Comfortable dress shoes — you'll stand all day","Expense tracking — save every receipt"]},
+ {cat:'📱 Tech & Logistics',items:["Disneyland app downloaded + payment pre-loaded","Uber/Lyft app ready","Priority Pass app active","Screenshot flights + hotel offline","Hotel address saved in maps"]},
+ {cat:'🧴 Personal',items:["Skincare — SoCal air is dry vs Indiana","The emerald chain. Obviously.","Hair products in travel sizes","Dinner-nice outfit for Laguna Beach (Thursday)","Beach outfit for Huntington Beach (Saturday)","Casual California outfits for evenings"]},
+];
+
+const TIPS=[
+ {e:'⏰',t:"Rope drop is everything. Every minute before 9 AM is worth 30 minutes at noon."},
+ {e:'📱',t:"Lightning Lane Multi Pass is NOT your park ticket. Separate ~$30 purchase in-app at 7:00 AM. See LL University in the planning dashboard."},
+ {e:'🌡️',t:"July in Anaheim averages 88-96°F. Sunscreen is not optional."},
+ {e:'💧',t:"Free water cups at any quick-service restaurant inside Disneyland. Use every 45 minutes."},
+ {e:'🍽️',t:"Mobile order food through the Disney app — skip the counter line entirely."},
+ {e:'🏰',t:"Disneyland's 70th Anniversary celebration is running right now, summer 2026. Special entertainment and overlays."},
+ {e:'🎢',t:"DCA (California Adventure) is a completely different park — not Disneyland Jr. Avengers Campus + Cars Land + World of Color is a full excellent evening."},
+ {e:'🚗',t:"Uber everything in OC. Parking at Disney is $30+/day. Rideshare wins."},
+ {e:'💰',t:"Budget reality: Disney Sunday costs ~$260-280 with Lightning Lane and food. Plan for it."},
+ {e:'📸',t:"Disney PhotoPass photographers at major spots take your photo free — purchase after via Memory Maker (~$169) or individually."},
+ {e:'⭐',t:"As a first-timer, you can't see everything. Pick 5 must-do rides, get those before noon, let the rest be bonus."},
+ {e:'🌙',t:"Disneyland at night is a completely different place. Do not leave before dark no matter how tired you are."},
+ {e:'🎫',t:"The $59 evening tickets are valid Sunday through Wednesday only. Monday DCA and Wednesday Disneyland are the right plays."},
+ {e:'🌊',t:"Laguna Beach Thursday is worth the 40-minute Uber. Heisler Park cliff walk + seafood dinner = perfect California finale."},
+ {e:'🏄',t:"Huntington Beach is the most quintessentially California beach experience available in an afternoon. Walk the pier. Touch the Pacific."},
+ {e:'🎡',t:"Knott's: no Lightning Lane, no reservations, no Disney pricing — simpler, cheaper, less crowded. Perfect after expo days."},
+ {e:'🛫',t:"SNA (John Wayne Airport) is one of the most pleasant airports in America. 45 min pre-flight is genuinely comfortable."},
+ {e:'🔋',t:"Bring a portable charger to Disney. The app drains your battery by early afternoon."},
+ {e:'🌭',t:"The Disneyland corn dog at Little Red Wagon is the most famous park food for a reason. Non-negotiable on Sunday."},
+ {e:'📍',t:"Lulu Hotel is well-positioned — Convention Center and Disney are both walking distance. No rental car needed all week."},
+];
+
+// ══════════════════════════════════════════════
+// SCREEN NAVIGATION
+// ══════════════════════════════════════════════
+function goTracker(){
+ document.getElementById('splash').classList.add('exit');
+ var t=document.getElementById('tracker');
+ t.classList.add('active');
+ initTracker();
+ initWeekNodes();
+}
+
+function goDash(){
+ document.getElementById('tracker').classList.add('exit');
+ var d=document.getElementById('dashboard');
+ d.classList.add('active');
+ d.classList.remove('back');
+ initDash();
+}
+
+function goTrackerBack(){
+ document.getElementById('dashboard').classList.add('back');
+ document.getElementById('dashboard').classList.remove('active');
+ document.getElementById('tracker').classList.remove('exit');
+}
+
+// ══════════════════════════════════════════════
+// SPLASH INIT
+// ══════════════════════════════════════════════
+(function initSplash(){
+ // Stars
+ var sc=document.getElementById('sparticles');
+ for(var i=0;i<60;i++){
+  var s=document.createElement('div');
+  var sz=Math.random()*2.5+.5;
+  s.className='sp';
+  s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;background:'+(Math.random()>.5?'#F5C540':'#44AAFF')+';--op:'+(0.1+Math.random()*0.5)+';--dl:'+(Math.random()*3)+'s;--d:'+(0.5+Math.random()*1)+'s;';
+  sc.appendChild(s);
+ }
+ // Bubbles
+ for(var j=0;j<10;j++){
+  var b=document.createElement('div');
+  var bsz=Math.random()*6+3;
+  b.className='bubble';
+  var col=Math.random()>.5?'rgba(245,197,64,':'rgba(68,170,255,';
+  b.style.cssText='width:'+bsz+'px;height:'+bsz+'px;left:'+(Math.random()*100)+'%;bottom:-20px;background:'+col+'0.25);--bd:'+(4+Math.random()*6)+'s;--bDelay:'+(Math.random()*5)+'s;';
+  document.getElementById('splash').appendChild(b);
+ }
+ // Typewriter
+ var el=document.getElementById('sp-title');
+ var txt='MISSION: CALIFORNIA';
+ var i2=0;
+ function type(){if(i2<txt.length){el.textContent+=txt[i2++];setTimeout(type,70);}}
+ setTimeout(type,900);
+ // Auto-advance
+ setTimeout(goTracker,7000);
+})();
+
+// ══════════════════════════════════════════════
+// TRACKER
+// ══════════════════════════════════════════════
+var selectedDay=null;
+
+function initTracker(){
+ var now=new Date();
+ var start=new Date('2026-07-25T08:06:00');
+ var end=new Date('2026-07-31T23:59:00');
+ var card=document.getElementById('statusCard');
+ var dot=document.getElementById('ldot');
+ var lbl=document.getElementById('trkLabel');
+
+ if(now<start){
+  dot.className='ldot off';
+  lbl.textContent='📡 CODY CAM — PRE-LAUNCH';
+  lbl.style.color='var(--gold)';
+  var ms=start-now;
+  var d=Math.floor(ms/86400000);
+  var h=Math.floor((ms%86400000)/3600000);
+  var m=Math.floor((ms%3600000)/60000);
+  card.innerHTML='<div style="font-size:10px;letter-spacing:2px;font-weight:800;color:var(--gold);margin-bottom:6px">T-MINUS</div><div class="status-cd">'+d+'d '+h+'h '+m+'m</div><div class="status-cdl">UNTIL LAUNCH — SBN 8:06 AM · JUL 25</div><div style="font-size:12px;color:var(--muted);line-height:1.7;margin:12px 0">Cody hasn\'t left Indiana yet. Check back July 25th to track him live across California.</div><div class="status-next"><strong style="color:var(--txt)">FIRST STOP:</strong> AA 6335 · SBN → DFW 8:06 AM, then AA 2684 · DFW → SNA 12:23 PM</div>';
+  selectedDay='sat';
+ } else if(now>end){
+  dot.className='ldot done';
+  lbl.textContent='✅ MISSION: CALIFORNIA — COMPLETE';
+  lbl.style.color='var(--gold)';
+  card.innerHTML='<div class="status-act" style="color:var(--gold)">Mission Complete! 🏠</div><div class="status-loc">Back in South Bend, Indiana</div><div style="font-size:13px;color:var(--muted);line-height:1.7;margin-top:8px">Cody survived the California mission — 7 days, 3 park nights, 4 expo days, 2 beaches, and one legendary corn dog.</div>';
+  selectedDay='fri';
+ } else {
+  dot.className='ldot live';
+  lbl.textContent='📡 CODY CAM — LIVE';
+  lbl.style.color='var(--em)';
+  var ds=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  var mn=now.getHours()*60+now.getMinutes();
+  var today=SCHED.filter(function(s){return s.d===ds;});
+  var cur=today.find(function(s){return mn>=s.s&&mn<s.e;});
+  var nxt=cur?today.find(function(s){return s.s>=cur.e;}):null;
+  var dayId=ds.split('-')[2]==='25'?'sat':ds.split('-')[2]==='26'?'sun':ds.split('-')[2]==='27'?'mon':ds.split('-')[2]==='28'?'tue':ds.split('-')[2]==='29'?'wed':ds.split('-')[2]==='30'?'thu':'fri';
+  selectedDay=dayId;
+  if(cur){
+   var rem=cur.e-mn;var rh=Math.floor(rem/60);var rm2=rem%60;
+   var rs=rh>0?rh+'h '+rm2+'m remaining':rm2+'m remaining';
+   card.innerHTML='<div class="status-phase em">● LIVE NOW</div><div class="status-act">'+cur.a+'</div><div class="status-loc">📍 '+cur.l+'</div><div class="status-rem">'+rs+' in this phase</div>'+(nxt?'<div class="status-next"><strong style="color:var(--txt)">NEXT UP:</strong> '+nxt.a+'</div>':'');
+  } else {
+   card.innerHTML='<div class="status-phase em">● LIVE NOW</div><div class="status-act">😴 Resting in Anaheim</div><div class="status-loc">📍 Lulu Hotel, Anaheim CA</div>';
+  }
+ }
+}
+
+function initWeekNodes(){
+ var now=new Date();
+ var start=new Date('2026-07-25');
+ var end=new Date('2026-07-31T23:59:00');
+ var container=document.getElementById('weekNodes');
+ container.innerHTML='';
+ var dateMap={'sat':'2026-07-25','sun':'2026-07-26','mon':'2026-07-27','tue':'2026-07-28','wed':'2026-07-29','thu':'2026-07-30','fri':'2026-07-31'};
+ DAYS.forEach(function(day){
+  var nodeDate=new Date(dateMap[day.id]);
+  var isCurrent=selectedDay===day.id;
+  var isPast=nodeDate<new Date() && !isCurrent;
+  var node=document.createElement('div');
+  var cls='wnode';
+  if(isCurrent)cls+=' active current';
+  else if(isPast)cls+=' past';
+  node.className=cls;
+  node.style.borderColor=isCurrent?day.accent:'';
+  node.innerHTML='<div class="wn-icon">'+(isPast?'✅':day.icon)+'</div><div class="wn-day">'+day.short.split(' ')[0]+'</div><div class="wn-date">JUL '+day.short.split(' ')[1]+'</div><div class="wn-status" style="color:'+(isCurrent?day.accent:(isPast?'var(--em)':'var(--muted)'))+'">'+day.label+'</div>';
+  node.onclick=(function(d){return function(){selectTrackerDay(d.id,d.accent);};})(day);
+  container.appendChild(node);
+ });
+ selectTrackerDay(selectedDay||'sat', DAYS.find(function(d){return d.id===(selectedDay||'sat');}).accent);
+}
+
+function selectTrackerDay(id,accent){
+ selectedDay=id;
+ document.querySelectorAll('.wnode').forEach(function(n){n.classList.remove('active');n.style.background='';});
+ var day=DAYS.find(function(d){return d.id===id;});
+ if(!accent)accent=day.accent;
+ // Update nodes
+ document.querySelectorAll('.wnode').forEach(function(n,i){
+  if(DAYS[i].id===id){n.classList.add('active');n.style.borderColor=accent;n.style.background='rgba('+hexToRgb(accent)+',.08)';}
+ });
+ // Render detail
+ var det=document.getElementById('dayDetail');
+ var tl=day.ev.map(function(ev){return '<div class="dd-item"><div class="dd-t" style="color:'+day.accent+'">'+ev.t+'</div><div class="dd-e">'+ev.e+'</div><div class="dd-c">'+ev.x+'</div></div>';}).join('');
+ var tips=day.tips&&day.tips.length?'<div class="dd-tips" style="color:'+day.accent+';border-color:'+day.accent+'"><div class="dd-tiphdr" style="color:'+day.accent+'">💡 TIPS</div>'+day.tips.map(function(t){return '→ '+t;}).join('<br>')+'</div>':'';
+ det.innerHTML='<div class="dd-header"><div class="dd-icon">'+day.icon+'</div><div><div class="dd-ey" style="color:'+day.accent+'">'+day.short.replace(' ',' · JUL ')+' · '+day.label+'</div><div class="dd-tag">'+day.tagline+'</div></div></div><div class="dd-tl">'+tl+'</div>'+tips;
+ det.scrollTop=0;
+}
+
+function hexToRgb(hex){
+ var r=parseInt(hex.slice(1,3),16);var g=parseInt(hex.slice(3,5),16);var b=parseInt(hex.slice(5,7),16);
+ return r+','+g+','+b;
+}
+
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+var dashInited=false;
+function initDash(){
+ if(dashInited)return;dashInited=true;
+ heroStars();renderDays();renderBooking();renderPacking();renderTips();updateCountdown();
+}
+
+function heroStars(){
+ var c=document.getElementById('hs');
+ for(var i=0;i<35;i++){
+  var s=document.createElement('div');
+  var sz=Math.random()*2+.5;
+  s.style.cssText='position:absolute;width:'+sz+'px;height:'+sz+'px;background:'+(Math.random()>.5?'#F5C540':'#44AAFF')+';border-radius:50%;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;opacity:'+(0.04+Math.random()*0.12)+';pointer-events:none;';
+  c.appendChild(s);
+ }
+}
+
+function renderDays(){
+ var tabs=document.getElementById('dtabs');
+ var panels=document.getElementById('dpanels');
+ DAYS.forEach(function(day,i){
+  var tab=document.createElement('button');
+  tab.className='dtab'+(i===0?' on':'');
+  tab.dataset.id=day.id;
+  if(i===0)tab.style.cssText='background:'+day.accent+';color:#06101C;';
+  tab.innerHTML=day.icon+' '+day.short+'<div class="tsub">'+day.label+'</div>';
+  tab.onclick=function(){selDay(day.id);};
+  tabs.appendChild(tab);
+  var panel=document.createElement('div');
+  panel.className='dpanel'+(i===0?' on':'');
+  panel.id='dp-'+day.id;
+  var tl=day.ev.map(function(ev){return '<div class="tli"><div class="tlt" style="color:'+day.accent+'">'+ev.t+'</div><div class="tle">'+ev.e+'</div><div class="tlc">'+ev.x+'</div></div>';}).join('');
+  var tips=day.tips&&day.tips.length?'<div class="tipbox" style="border-color:'+day.accent+'"><div class="tiph" style="color:'+day.accent+'">💡 DAY TIPS</div>'+day.tips.map(function(t){return '<div class="tipr"><span style="color:'+day.accent+'">→</span><span>'+t+'</span></div>';}).join('')+'</div>':'';
+  panel.innerHTML='<div class="dhead"><div class="dicon">'+day.icon+'</div><div><div class="dey" style="color:'+day.accent+'">'+day.short.replace(' ',' · JUL ')+' · '+day.label+'</div><div class="dtag">'+day.tagline+'</div></div></div><div class="tl">'+tl+'</div>'+tips;
+  panels.appendChild(panel);
+ });
+}
+
+function selDay(id){
+ document.querySelectorAll('.dtab').forEach(function(t){t.classList.remove('on');t.style.cssText='';});
+ document.querySelectorAll('.dpanel').forEach(function(p){p.classList.remove('on');});
+ var day=DAYS.find(function(d){return d.id===id;});
+ var tab=document.querySelector('[data-id="'+id+'"]');
+ tab.classList.add('on');tab.style.cssText='background:'+day.accent+';color:#06101C;';
+ document.getElementById('dp-'+id).classList.add('on');
+}
+
+function renderBooking(){
+ document.getElementById('blist').innerHTML=BOOKING.map(function(b){
+  return '<div class="bitem"><div class="bico">'+b.u+'</div><div class="bc"><div style="display:flex;justify-content:space-between;gap:8px"><div class="bn">'+b.item+'</div><div class="bp" style="color:'+b.color+'">'+b.price+'</div></div><div class="bbadge" style="color:'+b.color+';background:'+b.color+'18">'+b.badge+'</div><div class="bd">'+b.detail+'</div></div></div>';
+ }).join('');
+ document.getElementById('budlist').innerHTML=BUDGET.map(function(b){
+  return '<div style="background:var(--card);border:1px solid var(--bdr);border-radius:9px;padding:10px 14px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12px;flex:1">'+b.l+'</span><span style="font-size:13px;font-weight:900;color:var(--gold);flex-shrink:0">'+b.e+'</span></div>';
+ }).join('');
+}
+
+var packState={};
+function renderPacking(){
+ try{packState=JSON.parse(localStorage.getItem('cody-pack')||'{}');}catch(e){}
+ var total=0;var html='';
+ PACKING.forEach(function(cat,ci){
+  total+=cat.items.length;
+  html+='<div class="pcat">'+cat.cat+'</div>';
+  cat.items.forEach(function(item,ii){
+   var key=ci+'-'+ii;var on=!!packState[key];
+   html+='<div class="pitem'+(on?' on':'')+'" onclick="togglePack(\''+key+'\',this)"><div class="pchk">'+(on?'✓':'')+'</div><div class="ptxt">'+item+'</div></div>';
+  });
+ });
+ document.getElementById('plist').innerHTML=html;
+ updatePProg(total);
+}
+
+function togglePack(key,el){
+ packState[key]=!packState[key];
+ try{localStorage.setItem('cody-pack',JSON.stringify(packState));}catch(e){}
+ el.classList.toggle('on');
+ el.querySelector('.pchk').textContent=packState[key]?'✓':'';
+ updatePProg(PACKING.reduce(function(a,c){return a+c.items.length;},0));
+}
+
+function updatePProg(total){
+ var checked=Object.values(packState).filter(Boolean).length;
+ var el=document.getElementById('pprog');
+ el.textContent=checked+' / '+total+' packed';
+ el.style.color=checked===total?'var(--em)':'var(--gold)';
+}
+
+function renderTips(){
+ document.getElementById('tlist').innerHTML=TIPS.map(function(t){
+  return '<div class="tipitem"><div class="te">'+t.e+'</div><div class="tt">'+t.t+'</div></div>';
+ }).join('');
+}
+
+function tog(btn){btn.classList.toggle('on');btn.nextElementSibling.classList.toggle('on');}
+
+function updateCountdown(){
+ var s=new Date('2026-07-25T08:06:00');var e=new Date('2026-07-31T23:59:00');var n=new Date();
+ var el=document.getElementById('dEl');
+ if(n<s){el.textContent=Math.floor((s-n)/86400000);}
+ else if(n<=e){el.textContent='🟢';}
+ else{el.textContent='✅';}
+}
+</script>
+</body>
+</html>
